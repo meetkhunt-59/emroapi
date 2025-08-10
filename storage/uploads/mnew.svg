@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="100mm"
+   height="50mm"
+   viewBox="0 0 100 50"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:inkstitch="http://inkstitch.org/inkstitch">
+
+  <!-- Red Circle -->
+  <circle
+     cx="25"
+     cy="25"
+     r="15"
+     style="fill:#ff0000;stroke:none;"
+     inkscape:label="red-circle"
+     inkstitch:thread-color="#ff0000" />
+
+  <!-- Blue Square -->
+  <rect
+     x="60"
+     y="10"
+     width="20"
+     height="30"
+     style="fill:#0000ff;stroke:none;"
+     inkscape:label="blue-square"
+     inkstitch:thread-color="#0000ff" />
+
+</svg>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="100mm"
+   height="100mm"
+   viewBox="0 0 100 100"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:inkstitch="http://inkstitch.org/inkstitch">
+
+  <!-- Outer border (gold) -->
+  <circle
+     cx="50"
+     cy="50"
+     r="45"
+     style="fill:#ffd700;stroke:none;"
+     inkscape:label="outer-border"
+     inkstitch:thread-color="#FFD700" />
+
+  <!-- Inner circle (green) -->
+  <circle
+     cx="50"
+     cy="50"
+     r="35"
+     style="fill:#00aa00;stroke:none;"
+     inkscape:label="inner-fill"
+     inkstitch:thread-color="#00AA00" />
+
+  <!-- Star in center (black) -->
+  <path
+     d="M50,30 L54,44 H69 L57,53 L61,68 L50,59 L39,68 L43,53 L31,44 H46 Z"
+     style="fill:#000000;stroke:none;"
+     inkscape:label="star-center"
+     inkstitch:thread-color="#000000" />
+
+</svg>
+
