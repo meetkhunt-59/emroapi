@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget curl unzip xz-utils ca-certificates build-essential \
     xvfb xauth inkscape \
     libglib2.0-0 libsm6 libxrender1 libxext6 libcairo2 \
-    libgtk-3-0 libatk1.0-0 libgdk-pixbuf2.0-0 libpango-1.0-0 libwayland-server0 \
+    libgtk-3-0 libatk1.0-0 libgdk-pixbuf-xlib-2.0-0 libpango-1.0-0 libwayland-server0 \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -50,4 +50,7 @@ COPY . .
 # 7. Expose port and run app
 # ==========================
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9000", "--reload", "--proxy-headers"]
+
+# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9000", "--reload"]

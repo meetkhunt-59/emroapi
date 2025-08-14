@@ -4,7 +4,11 @@ import uuid, os
 from app.pipeline.stitchgen import run as make_pattern
 from pyembroidery import write_dst
 
-app = FastAPI()
+app = FastAPI(
+    root_path="/proxy/9000",        # tells FastAPI where it's hosted publicly
+    docs_url="/docs",
+    openapi_url="/openapi.json"
+)
 UPLOAD = "storage/uploads"; OUTPUT = "storage/outputs"
 os.makedirs(UPLOAD, exist_ok=True); os.makedirs(OUTPUT, exist_ok=True)
 
