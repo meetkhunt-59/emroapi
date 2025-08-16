@@ -36,11 +36,12 @@ def preprocess_to_svg(input_image_path: str, uid) -> str:
     "--output", output_svg_path,
     "--colormode", "color",
     "--hierarchical", "stacked",
-    "--color_precision", "1",
-    "--filter_speckle", "4",
-    "--mode", "polygon",
-    "--corner_threshold", "140",
-    "--gradient_step", "30"
+    "--color_precision", "5",
+    "--filter_speckle", "6",
+    "--mode", "spline",
+    "--corner_threshold", "70",
+    "--gradient_step", "6",
+    "--path_precision", "2"
     ]
     subprocess.run(cmd, check=True)
 

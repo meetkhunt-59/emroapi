@@ -10,9 +10,8 @@ PREPROCESS :
 COMAND : uvicorn app.main:app --reload
 
 DOCKER : docker build -t emroapi .
-         docker run -p 8000:8000 emroapi
+         docker run -p 9000:9000 emroapi
 
 CLEAR DOCKER CONTAINERS :
          docker system prune -a -f
-
-new things
+         
