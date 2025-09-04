@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb xauth inkscape \
     libglib2.0-0 libsm6 libxrender1 libxext6 libcairo2 \
     libgtk-3-0 libatk1.0-0 libgdk-pixbuf-xlib-2.0-0 libpango-1.0-0 libwayland-server0 \
+    libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
 
