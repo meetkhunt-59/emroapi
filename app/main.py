@@ -4,6 +4,8 @@ import logging
 import os
 from app.routes import upload, status, download
 from app.utils.errors import handle_embroidery_error, EmbroError
+from os import getenv
+from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(
@@ -22,12 +24,17 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+
+
+load_dotenv()
+
+allowed_origins = getenv("ALLOWED_ORIGINS", "").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # Include routers
