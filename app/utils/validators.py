@@ -65,13 +65,6 @@ def _validate_raster_image(content: bytes) -> None:
             if img.mode not in ('RGB', 'RGBA'):
                 img = img.convert('RGBA')
             
-            # Count unique colors
-            colors = len(set(img.convert('RGB').getdata()))
-            if colors > MAX_COLORS:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Image has too many colors. Maximum allowed: {MAX_COLORS}"
-                )
     except Exception as e:
         raise HTTPException(
             status_code=400,
@@ -95,21 +88,6 @@ def _validate_svg(content: bytes) -> None:
                     if not elem.attrib[attr].startswith('#'):  # Allow internal refs
                         del elem.attrib[attr]
         
-        # Count unique colors in SVG
-        colors = set()
-        for elem in tree.iter():
-            style = elem.get('style', '')
-            if style:
-                for part in style.split(';'):
-                    if part.startswith('fill:'):
-                        colors.add(part.split(':')[1].strip())
-        
-        if len(colors) > MAX_COLORS:
-            raise HTTPException(
-                status_code=400,
-                detail=f"SVG has too many colors. Maximum allowed: {MAX_COLORS}"
-            )
-                
     except ET.ParseError:
         raise HTTPException(
             status_code=400,

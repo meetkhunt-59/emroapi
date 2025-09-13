@@ -1,7 +1,7 @@
 """Configuration settings for the embroidery pipeline."""
 
 # Image processing settings
-MAX_COLORS = 10
+MAX_COLORS = 50
 MAX_IMAGE_SIZE = (4000, 4000)  # Max dimensions
 MAX_FILE_SIZE_MB = 20
 

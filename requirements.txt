@@ -48,6 +48,7 @@ httpx==0.28.1
 humanfriendly==10.0
 idna==3.10
 imageio==2.37.0
+numpy>=1.24.3
 isoduration==20.11.0
 jedi==0.19.2
 Jinja2==3.1.6
