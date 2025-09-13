@@ -1,8 +1,14 @@
 import os
 import subprocess
+import logging
 from rembg import remove
 from PIL import Image
 from lxml import etree
+from .config import VTRACER_SETTINGS, STITCH_SETTINGS
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 # Paths
@@ -30,18 +36,11 @@ def preprocess_to_svg(input_image_path: str, uid) -> str:
     img.save(no_bg_path)
 
     # === 2. Vectorize with vtracer ===
-    cmd = [
-    VTRACER_PATH,
-    "--input", no_bg_path,
-    "--output", output_svg_path,
-    "--colormode", "color",
-    "--hierarchical", "stacked",
-    "--color_precision", "1",
-    "--filter_speckle", "4",
-    "--mode", "polygon",
-    "--corner_threshold", "140",
-    "--gradient_step", "30"
-    ]
+    cmd = [VTRACER_PATH, "--input", no_bg_path, "--output", output_svg_path]
+    
+    # Add all settings from config
+    for key, value in VTRACER_SETTINGS.items():
+        cmd.extend([f"--{key}", str(value)])
     subprocess.run(cmd, check=True)
 
 
@@ -52,6 +51,10 @@ def preprocess_to_svg(input_image_path: str, uid) -> str:
 
 
 def embed_thread_colors(svg_path: str):
+    """
+    Process SVG file to properly set up thread colors and embroidery parameters.
+    Only processes fill colors and ensures proper thread changes.
+    """
     parser = etree.XMLParser(remove_blank_text=True)
     tree = etree.parse(svg_path, parser)
     root = tree.getroot()
@@ -62,24 +65,45 @@ def embed_thread_colors(svg_path: str):
 
     INKSTITCH_NS = "http://inkstitch.org/inkstitch"
     etree.register_namespace("inkstitch", INKSTITCH_NS)
-
-    for elem in root.iter():
-        style = elem.get("style")
+    
+    # Track unique colors to manage thread changes
+    processed_colors = set()
+    first_color = True  # First color doesn't need a thread change
+    
+    for elem in root.iter('{%s}path' % nsmap.get('svg', '')):
+        style = elem.get("style", "")
         if not style:
             continue
-        color = None
+            
+        # Extract fill color
+        fill_color = None
         for part in style.split(";"):
             if part.startswith("fill:") and "none" not in part:
-                color = part.split(":", 1)[1]
+                fill_color = part.split(":", 1)[1].strip()
                 break
-            if part.startswith("stroke:") and "none" not in part:
-                color = part.split(":", 1)[1]
-                break
-        if color:
-            elem.set(f"{{{INKSTITCH_NS}}}thread-color", color)
-            # Minimal embroidery params:
-            elem.set(f"{{{INKSTITCH_NS}}}fill-method", "auto")
-            elem.set(f"{{{INKSTITCH_NS}}}stitch-method", "auto")
-            elem.set(f"{{{INKSTITCH_NS}}}stitch-spacing", "2.0")
+                
+        if not fill_color or fill_color == "none":
+            continue
+            
+        # Set thread color
+        elem.set(f"{{{INKSTITCH_NS}}}thread-color", fill_color)
+        
+        # Set embroidery parameters
+        elem.set(f"{{{INKSTITCH_NS}}}fill-method", STITCH_SETTINGS['default_fill'])
+        elem.set(f"{{{INKSTITCH_NS}}}stitch-method", "running")
+        elem.set(f"{{{INKSTITCH_NS}}}stitch-spacing", str(STITCH_SETTINGS['spacing']))
+        elem.set(f"{{{INKSTITCH_NS}}}running-stitch-length", str(STITCH_SETTINGS['running_stitch']))
+        
+        # Add thread change command if it's a new color (except for first color)
+        if fill_color not in processed_colors:
+            if not first_color:
+                elem.set(f"{{{INKSTITCH_NS}}}thread-change", "true")
+            processed_colors.add(fill_color)
+            first_color = False
+            
+        # Remove stroke to prevent double-stitching
+        new_style_parts = [p for p in style.split(";") if not p.startswith("stroke:")]
+        new_style_parts.append("stroke:none")
+        elem.set("style", ";".join(new_style_parts))
 
     tree.write(svg_path, pretty_print=True, xml_declaration=True, encoding="UTF-8")
