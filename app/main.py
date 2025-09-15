@@ -4,6 +4,7 @@ import logging
 import os
 from app.routes import upload, status, download
 from app.utils.errors import handle_embroidery_error, EmbroError
+from prometheus_fastapi_instrumentator import Instrumentator
 from os import getenv
 from dotenv import load_dotenv
 
@@ -23,6 +24,9 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
+# ✅ initialize Prometheus metrics BEFORE startup
+Instrumentator().instrument(app).expose(app)
+ 
 # Add CORS middleware
 
 
