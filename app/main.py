@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 import logging
 import os
 from app.routes import upload, status, download
@@ -45,6 +47,19 @@ app.add_middleware(
 app.include_router(upload.router)
 app.include_router(status.router)
 app.include_router(download.router)
+
+# Mount static files and templates
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+templates = Jinja2Templates(directory="app/templates")
+
+# UI Routes
+@app.get("/")
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/progress/{job_id}")
+async def progress(request: Request, job_id: str):
+    return templates.TemplateResponse("progress.html", {"request": request, "job_id": job_id})
 
 # Create required directories
 for dir_path in ["storage/uploads", "storage/outputs"]:
