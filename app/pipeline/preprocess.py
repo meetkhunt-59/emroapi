@@ -34,8 +34,8 @@ def preprocess_to_svg(input_image_path: str, uid) -> str:
         outp.write(result)
 
     # (Optional) convert to RGB PNG with Pillow for safety
-    # img = Image.open(no_bg_path).convert("RGBA")
-    # img.save(no_bg_path)
+    img = Image.open(no_bg_path).convert("RGBA")
+    img.save(no_bg_path)
 
     # === 2. Vectorize with vtracer ===
     cmd = [VTRACER_PATH, "--input", no_bg_path, "--output", output_svg_path]

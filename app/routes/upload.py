@@ -36,19 +36,21 @@ async def upload(
         mime_type, ext = validate_mime_type(content)
         validate_image_content(content, mime_type)
         
-        # Save file temporarily for color analysis
+        # Save file temporarily for analysis
         temp_path = os.path.join(UPLOAD_DIR, f"temp_{file.filename}")
         try:
             with open(temp_path, "wb") as f:
                 f.write(content)
             
-            # Check color count
-            color_count = count_real_colors(temp_path)
-            if color_count > MAX_COLORS:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Image contains {color_count} distinct colors (similar shades are counted as one color). Maximum allowed is {MAX_COLORS}. Please simplify the image."
-                )
+            # Skip color validation for SVG files
+            if not mime_type.startswith('image/svg'):
+                # Check color count for bitmap images
+                color_count = count_real_colors(temp_path)
+                if color_count > MAX_COLORS:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Image contains {color_count} distinct colors (similar shades are counted as one color). Maximum allowed is {MAX_COLORS}. Please simplify the image."
+                    )
         finally:
             # Clean up temp file
             if os.path.exists(temp_path):
