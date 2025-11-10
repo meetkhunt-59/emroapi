@@ -4,157 +4,275 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmroAPI - Image to Embroidery Converter</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/navigation.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/sections.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script>document.documentElement.className = 'js';</script>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/app.css') }}">
 </head>
 <body>
-    <!-- Header -->
-    <header class="site-header">
-        <nav class="nav-container">
-            <div class="logo">
-                <i class="fas fa-thread"></i>
-                <span>EmroAPI</span>
-            </div>
-            <ul class="nav-links">
-                <li><a href="#features" class="nav-link">Features</a></li>
-                <li><a href="#upload" class="nav-link">Convert Now</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <div class="hero-section">
-        <div class="hero-content">
-            <h1 class="hero-title">Transform Images into Embroidery</h1>
-            <p class="hero-subtitle">Professional-grade conversion for your embroidery projects</p>
-            <a href="#upload" class="cta-button">Start Converting <i class="fas fa-arrow-right"></i></a>
+    <!-- Logo Loader -->
+    <div class="logo-loader" id="logoLoader">
+        <div class="logo-loader-content">
+            <div class="logo-loader-text">EmroAPI</div>
         </div>
-        <div class="hero-background"></div>
     </div>
 
-    <div class="container">
-        <!-- Introduction Section -->
-        <section id="intro" class="section">
-            <div class="intro-section section-content">
-                <h1 class="intro-title">Image to Embroidery Converter</h1>
-                <p class="intro-subtitle">Transform your images into embroidery-ready DST files with our advanced conversion technology</p>
-                
-                <div class="supported-formats">
-                    <span class="format-badge">PNG</span>
-                    <span class="format-badge">JPG</span>
-                    <span class="format-badge">SVG</span>
+    <div class="main-content" id="mainContent">
+        <!-- Navbar -->
+        <nav class="navbar" id="navbar">
+            <div class="logo">EmroAPI</div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#examples">Examples</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">☰</button>
+        </nav>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="logo">EmroAPI</div>
+                <button class="mobile-nav-close" id="mobileNavClose" onclick="toggleMobileMenu()">✕</button>
+            </div>
+            <ul class="mobile-nav-links" id="mobileNavLinks">
+                <li><a href="#features" onclick="toggleMobileMenu()">Features</a></li>
+                <li><a href="#examples" onclick="toggleMobileMenu()">Examples</a></li>
+                <li><a href="#contact" onclick="toggleMobileMenu()">Contact</a></li>
+            </ul>
+        </div>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>Convert Images to Embroidery Files</h1>
+            <p>Upload your image and convert it to professional DST embroidery format in seconds. Fast, accurate, and easy to use.</p>
+        </section>
+
+        <!-- Upload Section -->
+        <section class="upload-section" id="uploadSection">
+            <div class="upload-icon">🧵</div>
+            <h3>Upload Your Image</h3>
+            <p>Drag and drop your image here, or click to browse</p>
+            <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+                Choose File
+            </button>
+            <input type="file" id="fileInput" accept="image/*,.svg" onchange="handleFileSelect(event)">
+        </section>
+
+        <!-- Preview Section -->
+        <section class="preview-section" id="previewSection">
+            <div class="preview-grid">
+                <div class="preview-box">
+                    <h3>Original Image</h3>
+                    <div class="image-preview" id="originalPreview">
+                        <p style="color: #666;">No image selected</p>
+                    </div>
+                    <div style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
+                        <p><strong>File:</strong> <span id="fileName">-</span></p>
+                        <p><strong>Size:</strong> <span id="fileSize">-</span></p>
+                    </div>
+                </div>
+                <div class="preview-box">
+                    <h3>Conversion Settings</h3>
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>Width (mm)</label>
+                            <input type="number" id="width" value="100" min="10" max="500">
+                        </div>
+                        <div class="control-group">
+                            <label>Height (mm)</label>
+                            <input type="number" id="height" value="100" min="10" max="500">
+                        </div>
+                        <div class="control-group">
+                            <label>Stitch Density</label>
+                            <select id="density">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Color Mode</label>
+                            <select id="colorMode">
+                                <option value="auto" selected>Auto</option>
+                                <option value="mono">Monochrome</option>
+                                <option value="color">Full Color</option>
+                            </select>
+                        </div>
+                        <button class="btn-convert" id="convertBtn" onclick="convertImage()">
+                            Upload & Convert
+                        </button>
+                    </div>
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>Processing your image...</p>
+                    </div>
+                    <div class="error-message" id="errorMessage"></div>
+                    <div class="success-message" id="successMessage"></div>
                 </div>
             </div>
         </section>
 
-        <!-- Features Grid -->
-        <section id="features" class="section">
-            <div class="features-grid section-content">
-                <div class="feature-card">
-                    <i class="fas fa-magic feature-icon"></i>
-                    <h3 class="feature-title">Auto Background Removal</h3>
-                    <p class="feature-description">Smart AI-powered background removal for clean designs</p>
-                </div>
-            <div class="feature-card">
-                <i class="fas fa-vector-square feature-icon"></i>
-                <h3 class="feature-title">Vector Conversion</h3>
-                <p class="feature-description">High-quality vectorization for crisp embroidery</p>
-            </div>
-            <div class="feature-card">
-                <i class="fas fa-thread feature-icon"></i>
-                <h3 class="feature-title">DST Format</h3>
-                <p class="feature-description">Industry-standard DST format for all embroidery machines</p>
-            </div>
-        </div>
-
-        <!-- Upload Section -->
-        <div class="docs-section">
-            <h2>How It Works</h2>
-            <ul class="steps-list">
-                <li id="how-it-works">Upload your image (PNG, JPG, or SVG format, max 20MB)</li>
-                <li>Wait while we process your image and generate the embroidery pattern</li>
-                <li>Download your ready-to-use DST file</li>
-            </ul>
-        </div>
-
-        <!-- Upload Container -->
-        <section id="upload" class="upload-section">
-            <div class="upload-container" id="drop-zone">
-                <div class="upload-content">
-                    <img src="{{ url_for('static', path='/img/upload.svg') }}" alt="Upload" class="upload-icon">
-                    <p>Drag and drop your image here<br>or</p>
-                    <label for="file-upload" class="custom-file-upload">
-                        Choose File
-                    </label>
-                    <input type="file" id="file-upload" accept=".png,.jpg,.jpeg,.svg" hidden>
+        <!-- Before After Section -->
+        <section class="before-after" id="examples">
+            <div class="before-after-container">
+                <h2 class="animate-on-scroll">See the Difference</h2>
+                <p class="before-after-subtitle animate-on-scroll">Real examples of images converted to embroidery format</p>
+                <div class="comparison-grid">
+                    <div class="comparison-item animate-on-scroll">
+                        <div class="comparison-images">
+                            <div class="comparison-side">
+                                <div class="comparison-label">Before</div>
+                                <div class="comparison-placeholder">🖼️</div>
+                            </div>
+                            <div class="comparison-side">
+                                <div class="comparison-label">After</div>
+                                <div class="comparison-placeholder">🧵</div>
+                            </div>
+                        </div>
+                        <div class="comparison-info">
+                            <h3>Logo Design</h3>
+                            <p>Clean conversion with sharp edges and accurate color matching</p>
+                        </div>
+                    </div>
+                    <div class="comparison-item animate-on-scroll">
+                        <div class="comparison-images">
+                            <div class="comparison-side">
+                                <div class="comparison-label">Before</div>
+                                <div class="comparison-placeholder">🌸</div>
+                            </div>
+                            <div class="comparison-side">
+                                <div class="comparison-label">After</div>
+                                <div class="comparison-placeholder">🪡</div>
+                            </div>
+                        </div>
+                        <div class="comparison-info">
+                            <h3>Floral Pattern</h3>
+                            <p>Intricate details with smooth gradients and texture</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        <div id="file-info" class="hidden">
-            <p>Selected file: <span id="file-name"></span></p>
-            <button id="upload-btn" class="primary-btn">Upload</button>
-        </div>
-        <div id="progress" class="hidden">
-            <div class="progress-bar">
-                <div class="progress-fill"></div>
-            </div>
-            <p>Uploading...</p>
-        </div>
-        <div id="error-message" class="hidden error">
-        </div>
+        </section>
 
-        <!-- Tips Section -->
-        <div class="tips-section">
-            <h3>Pro Tips</h3>
-            <ul class="tips-list">
-                <li id ="tips">Use high-contrast images for best results</li>
-                <li>SVG files typically produce the most accurate embroidery patterns</li>
-                <li>Keep designs under 4000x4000 pixels for optimal processing</li>
-                <li>Simple designs with clear edges work best</li>
-            </ul>
-        </div>
+        <!-- Stats Section -->
+        <section class="stats">
+            <div class="stats-container">
+                <div class="stat animate-on-scroll">
+                    <div class="stat-number">50K+</div>
+                    <div class="stat-label">Images Converted</div>
+                </div>
+                <div class="stat animate-on-scroll">
+                    <div class="stat-number">99.9%</div>
+                    <div class="stat-label">Accuracy Rate</div>
+                </div>
+                <div class="stat animate-on-scroll">
+                    <div class="stat-number">< 30s</div>
+                    <div class="stat-label">Average Process Time</div>
+                </div>
+                <div class="stat animate-on-scroll">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Support Available</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features" id="features">
+            <div class="features-container">
+                <h2 class="animate-on-scroll">Why Choose EmroAPI?</h2>
+                <p class="features-subtitle animate-on-scroll">Professional embroidery conversion made simple</p>
+                <div class="features-grid">
+                    <div class="feature animate-on-scroll">
+                        <div class="feature-icon">⚡</div>
+                        <h3>Fast Conversion</h3>
+                        <p>Convert your images to DST format in seconds with our optimized processing engine.</p>
+                    </div>
+                    <div class="feature animate-on-scroll">
+                        <div class="feature-icon">🎯</div>
+                        <h3>High Quality</h3>
+                        <p>Industry-standard output compatible with all major embroidery machines.</p>
+                    </div>
+                    <div class="feature animate-on-scroll">
+                        <div class="feature-icon">🔧</div>
+                        <h3>Full Control</h3>
+                        <p>Adjust size, density, and color settings to match your exact needs.</p>
+                    </div>
+                    <div class="feature animate-on-scroll">
+                        <div class="feature-icon">💾</div>
+                        <h3>Easy Download</h3>
+                        <p>Get your converted DST file instantly, ready for your embroidery machine.</p>
+                    </div>
+                    <div class="feature animate-on-scroll">
+                        <div class="feature-icon">🔒</div>
+                        <h3>Secure & Private</h3>
+                        <p>Your files are processed securely and deleted after conversion.</p>
+                    </div>
+                    <div class="feature animate-on-scroll">
+                        <div class="feature-icon">🌐</div>
+                        <h3>API Access</h3>
+                        <p>Integrate our conversion service into your own applications.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer" id="contact">
+            <div class="footer-container">
+                <div class="footer-grid">
+                    <div class="footer-section footer-about">
+                        <h3>EmroAPI</h3>
+                        <p>Professional image to embroidery conversion service. Transform your designs into high-quality DST files compatible with all major embroidery machines.</p>
+                        <div class="social-links">
+                            <a href="#" class="social-link" title="Twitter">𝕏</a>
+                            <a href="#" class="social-link" title="LinkedIn">in</a>
+                            <a href="#" class="social-link" title="Facebook">📘</a>
+                            <a href="#" class="social-link" title="Instagram">📷</a>
+                        </div>
+                    </div>
+                    <div class="footer-section">
+                        <h3>Product</h3>
+                        <ul class="footer-links">
+                            <li><a href="#features">Features</a></li>
+                            <li><a href="#examples">Examples</a></li>
+                            <li><a href="#pricing">Pricing</a></li>
+                            <li><a href="#">API Documentation</a></li>
+                            <li><a href="#">Changelog</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h3>Company</h3>
+                        <ul class="footer-links">
+                            <li><a href="#">About Us</a></li>
+                            <li><a href="#">Blog</a></li>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#contact">Contact</a></li>
+                            <li><a href="#">Press Kit</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h3>Support</h3>
+                        <ul class="footer-links">
+                            <li><a href="#">Help Center</a></li>
+                            <li><a href="#">Tutorials</a></li>
+                            <li><a href="#">FAQ</a></li>
+                            <li><a href="#">Community</a></li>
+                            <li><a href="#">Status</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2025 EmroAPI. All rights reserved.</p>
+                    <div class="footer-bottom-links">
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Terms of Service</a>
+                        <a href="#">Cookie Policy</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
 
-    <!-- Footer -->
-    <footer class="site-footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>EmroAPI</h3>
-                <p>Professional embroidery file conversion service for creators and businesses.</p>
-                <div class="social-links">
-                    <a href="https://github.com/0xDonatHack" title="GitHub"><i class="fab fa-github"></i></a>
-                    <!-- <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a> -->
-                    <a href="https://www.linkedin.com/in/meetkhunt59/" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                </div>
-            </div>
-            <div class="footer-section">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="#features">Features</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h3>Resources</h3>
-                <ul>
-                    <li><a href="#">Support</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h3>Contact</h3>
-                <ul class="contact-info">
-                    <li><i class="fas fa-envelope"></i> meetkhunt9913@gmail.com</li>
-                    <li><i class="fas fa-phone"></i> +91 9106065085</li>
-                    <li><i class="fas fa-clock"></i> 24/7 Support</li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 EmroAPI. All rights reserved.</p>
-        </div>
-    </footer>
-
-    <script src="{{ url_for('static', path='/js/navigation.js') }}"></script>
-    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/ui-helper.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/app.js') }}"></script>
 </body>
 </html>
