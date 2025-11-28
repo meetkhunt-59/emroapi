@@ -53,9 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
         handleFiles(this.files);
     });
 
-    // Store the current file
-    let currentFile = null;
-
     function handleFiles(files) {
         if (files.length > 0) {
             currentFile = files[0];
@@ -89,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 100);
 
             try {
-                const response = await fetch('/upload', {
+                const response = await fetch('/proxy/9000/upload', {
                     method: 'POST',
                     body: formData
                 });            if (!response.ok) {

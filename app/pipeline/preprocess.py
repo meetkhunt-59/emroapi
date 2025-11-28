@@ -1,7 +1,7 @@
 import os
 import subprocess
 import logging
-from rembg import remove
+from rembg import remove, new_session
 from PIL import Image
 from lxml import etree
 from .config import VTRACER_SETTINGS, STITCH_SETTINGS
@@ -26,6 +26,8 @@ def preprocess_to_svg(input_image_path: str, uid) -> str:
     output_svg_path = os.path.join(PROCESSED_DIR, f"{base}_inkstitch.svg")
 
     # === 1. Remove background ===
+    # Create a session for the model you want
+    # session = new_session(model_name="u2netp")
     with open(input_image_path, "rb") as inp:
         result = remove(inp.read())
     with open(no_bg_path, "wb") as outp:

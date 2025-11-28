@@ -6,6 +6,7 @@ FROM python:3.10-slim
 # Prevent Python from writing pyc files & enable unbuffered logs
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PIP_DEFAULT_TIMEOUT=100
 
 # ==========================
 # 2. Install system dependencies
@@ -52,4 +53,4 @@ COPY . .
 # ==========================
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9000", "--reload", "--proxy-headers", "--log-level", "error", "--access-log"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9000", "--reload", "--proxy-headers"]

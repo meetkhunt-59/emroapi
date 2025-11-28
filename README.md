@@ -148,6 +148,10 @@ COMAND : uvicorn app.main:app --reload
 DOCKER : docker build -t emroapi .
          docker run -p 9000:9000 emroapi
 
+         OR
+
+         Docker compose build
+
 CLEAR DOCKER CONTAINERS :
          docker system prune -a -f
          
