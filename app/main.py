@@ -9,13 +9,11 @@ from app.utils.errors import handle_embroidery_error, EmbroError
 from prometheus_fastapi_instrumentator import Instrumentator
 from os import getenv
 from dotenv import load_dotenv
+from app.utils.logging_config import setup_logging
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Configure logging (with uvicorn access filtering)
+# setup_logging()
+# logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="EmroAPI",

@@ -4,81 +4,183 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmroAPI - Processing Status</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/app.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/progress.css') }}">
 </head>
 <body>
-    <!-- Header -->
-    <header class="site-header">
-        <nav class="nav-container">
-            <div class="logo">
-                <i class="fas fa-thread"></i>
-                <span>EmroAPI</span>
-            </div>
-            <ul class="nav-links">
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Navbar -->
+        <nav class="navbar" id="navbar">
+            <div class="logo">EmroAPI</div>
+            <ul class="nav-links" id="navLinks">
                 <li><a href="/">Home</a></li>
                 <li><a href="/#features">Features</a></li>
+                <li><a href="/#contact">Contact</a></li>
             </ul>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">☰</button>
         </nav>
-    </header>
 
-    <div class="container">
-        <h1 class="progress-title">Processing Status</h1>
-        <div class="status-container">
-            <p>Job ID: <code>{{ job_id }}</code></p>
-            <div id="status-info">
-                <div class="status-icon processing"></div>
-                <p id="status-text">Checking status...</p>
+        <!-- Mobile Menu -->
+        <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <div class="logo">EmroAPI</div>
+                <button class="mobile-nav-close" id="mobileNavClose" onclick="toggleMobileMenu()">✕</button>
             </div>
-            <button id="check-status" class="primary-btn" data-job-id="{{ job_id }}">
-                Check Status
-                <span id="cooldown" class="hidden">(10s)</span>
-            </button>
-            <div id="download-section" class="hidden">
-                <p>Your file is ready!</p>
-                <a id="download-link" href="#" class="primary-btn">Download DST File</a>
-            </div>
-            <div id="error-message" class="hidden error">
-            </div>
+            <ul class="mobile-nav-links" id="mobileNavLinks">
+                <li><a href="/">Home</a></li>
+                <li><a href="/#features" onclick="toggleMobileMenu()">Features</a></li>
+                <li><a href="/#contact" onclick="toggleMobileMenu()">Contact</a></li>
+            </ul>
         </div>
-        <a href="/" class="secondary-btn">Convert Another File</a>
-    </div>
 
-    <!-- Footer -->
-    <footer class="site-footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>EmroAPI</h3>
-                <p>Professional embroidery file conversion service for creators and businesses.</p>
-                <div class="social-links">
-                    <a href="#" title="GitHub"><i class="fab fa-github"></i></a>
-                    <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
-                    <a href="#" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <!-- Hero Section -->
+        <section class="hero progress-hero">
+            <h1>Processing Your Image</h1>
+            <p>Your embroidery file is being prepared. This usually takes a few seconds.</p>
+        </section>
+
+        <!-- Progress Section -->
+        <section class="progress-section">
+            <div class="progress-container">
+                <!-- Job Info Card -->
+                <div class="progress-card job-info-card">
+                    <div class="card-header">
+                        <h2>Job Details</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="job-detail">
+                            <span class="label">Job ID:</span>
+                            <code class="value">{{ job_id }}</code>
+                        </div>
+                        <div class="job-detail">
+                            <span class="label">Status:</span>
+                            <span class="status-badge" id="statusBadge">Processing</span>
+                        </div>
+                        <div class="job-detail">
+                            <span class="label">Last Updated:</span>
+                            <span class="value" id="lastUpdated">Just now</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Steps -->
+                <div class="progress-card steps-card">
+                    <div class="card-header">
+                        <h2>Conversion Steps</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="steps-container">
+                            <div class="step" id="step1">
+                                <div class="step-icon completed">✓</div>
+                                <div class="step-content">
+                                    <div class="step-title">File Uploaded</div>
+                                    <div class="step-desc">Your image has been received</div>
+                                </div>
+                            </div>
+
+                            <div class="step-line"></div>
+
+                            <div class="step" id="step2">
+                                <div class="step-icon active">
+                                    <div class="spinner"></div>
+                                </div>
+                                <div class="step-content">
+                                    <div class="step-title">Processing</div>
+                                    <div class="step-desc">Converting to embroidery format</div>
+                                </div>
+                            </div>
+
+                            <div class="step-line"></div>
+
+                            <div class="step" id="step3">
+                                <div class="step-icon pending">●</div>
+                                <div class="step-content">
+                                    <div class="step-title">Complete</div>
+                                    <div class="step-desc">Ready for download</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Message -->
+                <div class="progress-card status-card">
+                    <div class="status-icon processing" id="statusIcon"></div>
+                    <p id="status-text" class="status-message">Checking status...</p>
+                </div>
+
+                <!-- Download Section (Hidden Initially) -->
+                <div class="progress-card download-card hidden" id="downloadSection">
+                    <div class="success-icon">✓</div>
+                    <h3>Your file is ready!</h3>
+                    <p>Your embroidery file has been successfully created.</p>
+                    <a id="download-link" href="#" class="btn btn-primary btn-lg">
+                        📥 Download DST File
+                    </a>
+                </div>
+
+                <!-- Error Section (Hidden Initially) -->
+                <div class="progress-card error-card hidden" id="errorSection">
+                    <div class="error-icon">⚠</div>
+                    <h3>Processing Error</h3>
+                    <p id="error-message" class="error-text"></p>
+                    <a href="/" class="btn btn-secondary">
+                        ↻ Convert Another File
+                    </a>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons" id="actionButtons">
+                    <button id="check-status" class="btn btn-primary" data-job-id="{{ job_id }}">
+                        Check Status
+                        <span id="cooldown" class="cooldown-text hidden">(10s)</span>
+                    </button>
+                    <a href="/" class="btn btn-secondary">Back to Home</a>
                 </div>
             </div>
-            <div class="footer-section">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="/#features">Features</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h3>Support</h3>
-                <ul class="contact-info">
-                    <li><i class="fas fa-envelope"></i> support@emroapi.com</li>
-                    <li><i class="fas fa-clock"></i> 24/7 Support</li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 EmroAPI. All rights reserved.</p>
-            <div class="footer-legal">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-            </div>
-        </div>
-    </footer>
+        </section>
 
+        <!-- Footer -->
+        <footer class="site-footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>EmroAPI</h3>
+                    <p>Professional embroidery file conversion service for creators and businesses.</p>
+                    <div class="social-links">
+                        <a href="#" title="GitHub" aria-label="GitHub">GitHub</a>
+                        <a href="#" title="Twitter" aria-label="Twitter">Twitter</a>
+                        <a href="#" title="LinkedIn" aria-label="LinkedIn">LinkedIn</a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/#features">Features</a></li>
+                        <li><a href="/#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <ul class="contact-info">
+                        <li>📧 support@emroapi.com</li>
+                        <li>⏰ 24/7 Support</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 EmroAPI. All rights reserved.</p>
+                <div class="footer-legal">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', path='/js/ui-helper.js') }}"></script>
     <script src="{{ url_for('static', path='/js/progress.js') }}"></script>
 </body>
 </html>

@@ -32,5 +32,17 @@ def setup_logging():
     file_handler.setFormatter(JSONFormatter())
     logger.addHandler(file_handler)
     
-    # Disable uvicorn access logs
-    logging.getLogger("uvicorn.access").handlers = []
+    # Disable/Filter uvicorn access logs (e.g., GET /metrics)
+    class _IgnoreMetricsFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            msg = record.getMessage()
+            return "/metrics" not in msg
+
+    uvicorn_access = logging.getLogger("uvicorn.access")
+    uvicorn_access.setLevel(logging.WARNING)  # raise threshold
+    uvicorn_access.propagate = False
+    uvicorn_access.handlers = []
+    # Add a minimal handler only if needed by framework defaults
+    handler = logging.StreamHandler(sys.stdout)
+    handler.addFilter(_IgnoreMetricsFilter())
+    uvicorn_access.addHandler(handler)
