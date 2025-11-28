@@ -4,7 +4,7 @@
 set -e
 
 # Configuration
-DOMAIN="35.239.124.112"  # Replace with your domain
+DOMAIN="34.133.4.149"  # Replace with your domain
 EMAIL="meetkhunt9913@gmail.com"  # Replace with your email
 
 # Install Nginx and Certbot
