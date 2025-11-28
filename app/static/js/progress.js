@@ -4,16 +4,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusIcon = document.getElementById('statusIcon');
     const statusBadge = document.getElementById('statusBadge');
     const lastUpdated = document.getElementById('lastUpdated');
-    
+
     const downloadSection = document.getElementById('downloadSection');
     const downloadLink = document.getElementById('download-link');
-    
+
     const errorSection = document.getElementById('errorSection');
     const errorMessage = document.getElementById('error-message');
-    
+
     const actionButtons = document.getElementById('actionButtons');
     const cooldownText = document.getElementById('cooldown');
-    
+
     const step2Icon = document.querySelector('#step2 .step-icon');
     const step3Icon = document.querySelector('#step3 .step-icon');
 
@@ -30,12 +30,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function checkStatus() {
         const jobId = checkStatusBtn.dataset.jobId;
-        
+
         try {
             console.log(`Checking status for job: ${jobId}`);
             const response = await fetch(`/status/${jobId}`);
             console.log(`Status response: ${response.status}`);
-            
+
             if (!response.ok) {
                 throw new Error(await response.text());
             }
@@ -142,11 +142,11 @@ document.addEventListener('DOMContentLoaded', () => {
         cooldownTime = cooldownInterval;
         checkStatusBtn.disabled = true;
         cooldownText.classList.remove('hidden');
-        
+
         const timer = setInterval(() => {
             cooldownTime--;
             cooldownText.textContent = `(${cooldownTime}s)`;
-            
+
             if (cooldownTime <= 0) {
                 clearInterval(timer);
                 checkStatusBtn.disabled = false;
@@ -163,11 +163,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial status check
     checkStatus();
 
-    // Auto-check every 3 seconds if not completed/failed
+    // Auto-check every 10 seconds if not completed/failed
     setInterval(() => {
         if (!downloadSection.classList.contains('hidden') || !errorSection.classList.contains('hidden')) {
             return; // Stop checking if already completed or failed
         }
         checkStatus();
-    }, 3000);
+    }, 10000);
 });
