@@ -1,16 +1,36 @@
-"""Simple in-memory job store (can be replaced with Redis/PostgreSQL later)."""
+"""Job store with Redis for persistent job state across container restarts."""
+import redis
+import json
 from typing import Dict, Optional, Any
 from datetime import datetime
 import logging
+from os import getenv
 
 logger = logging.getLogger(__name__)
 
+# Connect to Redis
+redis_host = getenv("REDIS_HOST", "redis")
+redis_port = int(getenv("REDIS_PORT", "6379"))
+
+try:
+    redis_client = redis.Redis(
+        host=redis_host,
+        port=redis_port,
+        decode_responses=True,
+        socket_connect_timeout=5
+    )
+    redis_client.ping()
+    logger.info(f"Connected to Redis at {redis_host}:{redis_port}")
+except Exception as e:
+    logger.error(f"Failed to connect to Redis: {e}")
+    redis_client = None
+
 class JobStore:
     def __init__(self):
-        self._store: Dict[str, Dict[str, Any]] = {}
+        self.redis = redis_client
         
     def create_job(self, job_id: str, file_info: Dict[str, Any]) -> Dict[str, Any]:
-        """Create a new job entry."""
+        """Create a new job entry in Redis."""
         job = {
             "job_id": job_id,
             "status": "pending",
@@ -20,22 +40,30 @@ class JobStore:
             "download": None,
             "error": None
         }
-        self._store[job_id] = job
+        if self.redis:
+            self.redis.set(f"job:{job_id}", json.dumps(job), ex=86400)  # 24hr TTL
         logger.info(f"Created job {job_id}")
         return job
         
     def get_job(self, job_id: str) -> Optional[Dict[str, Any]]:
-        """Get job details by ID."""
-        return self._store.get(job_id)
+        """Get job details from Redis."""
+        if not self.redis:
+            return None
+        data = self.redis.get(f"job:{job_id}")
+        return json.loads(data) if data else None
         
     def update_job(self, job_id: str, **updates) -> Optional[Dict[str, Any]]:
-        """Update job details."""
-        if job_id not in self._store:
+        """Update job in Redis."""
+        if not self.redis:
             return None
             
-        job = self._store[job_id]
+        job = self.get_job(job_id)
+        if not job:
+            return None
+            
         job.update(updates)
         job["updated_at"] = datetime.utcnow().isoformat()
+        self.redis.set(f"job:{job_id}", json.dumps(job), ex=86400)
         logger.info(f"Updated job {job_id}: {updates}")
         return job
         

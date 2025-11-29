@@ -1,11 +1,23 @@
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always
+
   emroapi:
     build: .
     container_name: emroapi
     ports:
       - "9000:9000"
     restart: always
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
 
   prometheus:
     image: prom/prometheus
