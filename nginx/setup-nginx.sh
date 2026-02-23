@@ -4,8 +4,8 @@
 set -e
 
 # Configuration
-DOMAIN="34.133.4.149"  # Replace with your domain
-EMAIL="meetkhunt9913@gmail.com"  # Replace with your email
+DOMAIN=""  # Replace with your domain
+EMAIL=""  # Replace with your email
 
 # Install Nginx and Certbot
 sudo apt update
