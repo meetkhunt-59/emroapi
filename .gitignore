@@ -1,7 +1,3 @@
-Inkscape-091e20e-x86_64.AppImage
-huggingmodels.txt
-test.py
-
 # Python virtual environment
 venv/
 
@@ -27,6 +23,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+.env
 
 # Installer logs
 pip-log.txt
