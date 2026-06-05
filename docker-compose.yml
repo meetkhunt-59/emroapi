@@ -9,6 +9,7 @@ services:
 
   emroapi:
     build: .
+    platform: linux/amd64 
     container_name: emroapi
     ports:
       - "9000:9000"

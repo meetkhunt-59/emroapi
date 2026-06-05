@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from app.utils.job_store import job_store
 import logging
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.get("/status/{job_id}")
