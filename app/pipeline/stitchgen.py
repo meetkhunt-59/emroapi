@@ -1,7 +1,7 @@
 import os
 import uuid
 import subprocess
-from app.pipeline.preprocess import preprocess_to_svg
+from app.pipeline.preprocess import preprocess_to_svg, preprocess_svg_file
 
 def ensure_dir(path: str):
     os.makedirs(path, exist_ok=True)
@@ -28,16 +28,17 @@ def export_with_inkstitch(svg_path: str, uid, output_dir: str = "storage/outputs
 
     return dst_output_path
 
-def run(input_image_path: str, uid) -> str:
+def run(input_image_path: str, uid, width: float = None, height: float = None) -> str:
     """
     Full pipeline:
-    1. Preprocess image (remove bg, vectorize, metadata)
+    1. Preprocess image (remove bg, vectorize, metadata) OR preprocess direct SVG
     2. Export to DST via Inkscape/InkStitch
     """
     ext = os.path.splitext(input_image_path)[1].lower()
     if ext == ".svg":
-        svg_path = input_image_path
+        svg_path = preprocess_svg_file(input_image_path, uid, width, height)
     else:
-        svg_path = preprocess_to_svg(input_image_path, uid)
+        svg_path = preprocess_to_svg(input_image_path, uid, width, height)
     dst_path = export_with_inkstitch(svg_path, uid)
     return dst_path
+

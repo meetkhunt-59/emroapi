@@ -159,4 +159,6 @@ webcolors==24.11.1
 webencodings==0.5.1
 websocket-client==1.8.0
 websockets==15.0.1
-
+shapely==2.1.2
+svgpathtools==1.7.2
+scour==0.38.2

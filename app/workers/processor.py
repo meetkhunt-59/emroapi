@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # Create a thread pool executor for CPU-bound tasks
 thread_pool = ThreadPoolExecutor(max_workers=4)
 
-async def process_job(job_id: str, file_path: str) -> Dict[str, Any]:
+async def process_job(job_id: str, file_path: str, width: float = None, height: float = None) -> Dict[str, Any]:
     """
     Process an embroidery conversion job in the background.
     Updates job status in job store when complete.
@@ -25,7 +25,9 @@ async def process_job(job_id: str, file_path: str) -> Dict[str, Any]:
             thread_pool, 
             make_pattern, 
             file_path, 
-            job_id
+            job_id,
+            width,
+            height
         )
         
         if not os.path.exists(dst_path):

@@ -1,11 +1,13 @@
 # Python virtual environment
-venv/
+.venv/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
+.pytest_cache
 *.py[cod]
 *.pyo
 *.pyd
+.ruff_cache
 
 # Distribution / packaging
 .Python
@@ -24,6 +26,7 @@ var/
 .installed.cfg
 *.egg
 .env
+storage
 
 # Installer logs
 pip-log.txt
@@ -46,3 +49,5 @@ coverage.xml
 .vscode/
 
 
+# Edited by Developer
+.agents

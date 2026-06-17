@@ -1,6 +1,7 @@
 """Upload endpoint for embroidery conversion."""
 import os
-from fastapi import APIRouter, UploadFile, File, BackgroundTasks, HTTPException
+from typing import Optional
+from fastapi import APIRouter, UploadFile, File, BackgroundTasks, HTTPException, Form
 from app.utils.validators import validate_file_size, validate_mime_type, validate_image_content
 from app.utils.job_store import job_store
 from app.workers.processor import process_job
@@ -18,7 +19,9 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 @router.post("/upload")
 async def upload(
     background_tasks: BackgroundTasks,
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    width: Optional[float] = Form(None),
+    height: Optional[float] = Form(None)
 ):
     """
     Upload a file for embroidery conversion.
@@ -72,7 +75,7 @@ async def upload(
             f.write(content)
             
         # Add processing to background tasks
-        background_tasks.add_task(process_job, job_id, file_path)
+        background_tasks.add_task(process_job, job_id, file_path, width, height)
         
         # Return response immediately
         response = {

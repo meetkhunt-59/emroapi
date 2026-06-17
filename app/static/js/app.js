@@ -69,6 +69,16 @@ async function convertImage() {
     const formData = new FormData();
     formData.append('file', selectedFile);
 
+    // Get dimensions if specified
+    const widthInput = document.getElementById('width');
+    const heightInput = document.getElementById('height');
+    if (widthInput && widthInput.value) {
+        formData.append('width', widthInput.value);
+    }
+    if (heightInput && heightInput.value) {
+        formData.append('height', heightInput.value);
+    }
+
     try {
         // Upload file to backend
         const response = await fetch('/proxy/9000/upload', {

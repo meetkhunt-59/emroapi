@@ -16,6 +16,10 @@ services:
     restart: always
     depends_on:
       - redis
+    volumes:
+      - ./app:/app/app
+      - ./tools:/app/tools
+      - ./storage:/app/storage
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
