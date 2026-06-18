@@ -757,10 +757,18 @@ def quantize_svg_colors(svg_path: str, max_colors: int = MAX_COLORS):
 #  Path merging + micro-fragment removal
 # ---------------------------------------------------------------------------
 
-def merge_same_color_paths(svg_path: str, min_area: float = MIN_PATH_AREA):
+def remove_micro_fragments(svg_path: str, min_area: float = MIN_PATH_AREA):
     """
-    Group paths by fill color, merge overlapping/adjacent paths in each group,
-    and remove micro-fragments below the minimum area threshold.
+    Remove paths whose area falls below min_area (micro-fragments / speckles).
+
+    This replaces the old merge_same_color_paths() which destructively
+    converted Bézier curves to straight-line polygons via Shapely
+    re-serialization.  We now use Shapely ONLY for the area check —
+    the original path d-attribute is never touched.
+
+    For raster-sourced SVGs vtracer --hierarchical cutout already resolves
+    inter-color overlap at vectorization time, so geometric merging is
+    unnecessary and harmful to curve fidelity.
     """
     parser = etree.XMLParser(remove_blank_text=True)
     tree = etree.parse(svg_path, parser)
@@ -771,12 +779,12 @@ def merge_same_color_paths(svg_path: str, min_area: float = MIN_PATH_AREA):
         doc = Document(svg_path)
         svg_paths = doc.paths()
     except Exception as e:
-        logger.error(f"Failed to parse SVG for path merging: {e}")
+        logger.error(f"Failed to parse SVG for micro-fragment removal: {e}")
         return
 
-    # Collect paths by color
-    color_groups = {}  # color -> [(index, svg_path_obj, element)]
     xml_paths = list(root.iter(f'{{{ns}}}path'))
+    parent_map = {c: p for p in root.iter() for c in p}
+    removed = 0
 
     for idx, svg_p in enumerate(svg_paths):
         if idx >= len(xml_paths):
@@ -785,70 +793,24 @@ def merge_same_color_paths(svg_path: str, min_area: float = MIN_PATH_AREA):
         fill = elem.get("fill", "").strip().upper()
         if not fill or fill == "NONE":
             continue
-        color_groups.setdefault(fill, []).append((idx, svg_p, elem))
 
-    parent_map = {c: p for p in root.iter() for c in p}
-    removed = 0
-    merged = 0
+        # Use Shapely only for area measurement — never re-serialise the path
+        geom = path_to_shapely(svg_p)
+        if geom is None or geom.is_empty or geom.area < min_area:
+            parent = parent_map.get(elem)
+            if parent is not None:
+                parent.remove(elem)
+                removed += 1
 
-    for color, group in color_groups.items():
-        if len(group) <= 1:
-            # Still check for micro-fragments
-            if len(group) == 1:
-                _, sp, elem = group[0]
-                geom = path_to_shapely(sp)
-                if geom is not None and geom.area < min_area:
-                    parent = parent_map.get(elem)
-                    if parent is not None:
-                        parent.remove(elem)
-                        removed += 1
-            continue
+    logger.info(f"Micro-fragment removal: removed {removed} paths below {min_area} sq-px area")
+    if removed > 0:
+        tree.write(svg_path, pretty_print=True, xml_declaration=True, encoding="UTF-8")
 
-        # Convert all paths in group to shapely geometries
-        geoms_and_elems = []
-        for _, sp, elem in group:
-            geom = path_to_shapely(sp)
-            geoms_and_elems.append((geom, elem))
 
-        # Remove micro-fragments
-        valid = []
-        for geom, elem in geoms_and_elems:
-            if geom is None or geom.is_empty or geom.area < min_area:
-                parent = parent_map.get(elem)
-                if parent is not None:
-                    parent.remove(elem)
-                    removed += 1
-            else:
-                valid.append((geom, elem))
-
-        if len(valid) <= 1:
-            continue
-
-        # Merge geometries for this color group
-        try:
-            all_geoms = [g for g, _ in valid]
-            merged_geom = unary_union(all_geoms)
-
-            if merged_geom.is_empty:
-                continue
-
-            # Keep the first element, update its path, remove the rest
-            first_elem = valid[0][1]
-            new_d = shapely_to_svg_path(merged_geom)
-            if new_d:
-                first_elem.set("d", new_d)
-                merged += len(valid) - 1
-
-            for _, elem in valid[1:]:
-                parent = parent_map.get(elem)
-                if parent is not None:
-                    parent.remove(elem)
-
-        except Exception as e:
-            logger.warning(f"Failed to merge paths for color {color}: {e}")
-
-    logger.info(f"Path merging: removed {removed} micro-fragments, merged {merged} paths")
-    tree.write(svg_path, pretty_print=True, xml_declaration=True, encoding="UTF-8")
+# Keep the old name as an alias so existing call-sites don't break
+def merge_same_color_paths(svg_path: str, min_area: float = MIN_PATH_AREA):
+    """Deprecated alias → delegates to remove_micro_fragments()."""
+    remove_micro_fragments(svg_path, min_area)
 
 
 # ---------------------------------------------------------------------------
@@ -1067,17 +1029,31 @@ def embed_thread_colors(svg_path: str):
 #  Pipeline: SVG upload
 # ---------------------------------------------------------------------------
 
-def preprocess_svg_file(input_svg_path: str, uid, width: float = None, height: float = None) -> str:
+def preprocess_svg_file(
+    input_svg_path: str,
+    uid,
+    width: float = None,
+    height: float = None,
+    skip_overlap_cleanup: bool = False,
+) -> str:
     """
     Full preprocessing pipeline for SVG files:
     1. Inkscape object-to-path (flatten shapes/transforms)
     2. ensure_viewbox (construct viewBox if missing)
     3. bake_transforms (flatten all transforms into absolute path coords)
-    4. Overlap cleanup (stroke-aware) — now in absolute coordinate space
-    5. SVG optimization (scour)
-    6. Remove empty/trivial paths (Inkscape artifacts)
-    7. Canvas resize (fit to hoop) — direct coordinate scaling
-    8. Embed thread colors + CSS resolution + underlay + compensation
+    4. Flatten SVG DOM (unwrap groups/clipPaths)
+    5. Overlap cleanup — skipped when skip_overlap_cleanup=True (e.g. raster
+       pipeline where vtracer --hierarchical cutout already handles overlap)
+    6. SVG optimization (scour)
+    7. Remove empty/trivial paths (Inkscape artifacts)
+    8. Canvas resize (fit to hoop)
+    9. Embed thread colors + CSS resolution + underlay + compensation
+
+    Args:
+        skip_overlap_cleanup: When True, step 5 is bypassed entirely so that
+            Bézier curve data is never destroyed by the Shapely boolean ops
+            inside cleanup_svg_overlaps().  Use this for raster-sourced SVGs
+            where vtracer already emits non-overlapping cutout geometry.
     """
     os.makedirs(PROCESSED_DIR, exist_ok=True)
     base = str(uid)
@@ -1109,25 +1085,33 @@ def preprocess_svg_file(input_svg_path: str, uid, width: float = None, height: f
     # 3. Bake ALL transforms into absolute path coordinates
     bake_transforms(flat_svg_path)
 
-    # 3.5 Flatten SVG DOM (unwrap paths, remove clipPaths/groups/nested SVGs)
+    # 4. Flatten SVG DOM (unwrap paths, remove clipPaths/groups/nested SVGs)
     flatten_svg_dom(flat_svg_path)
 
-    # 4. Overlap cleanup (stroke-aware) — now runs in absolute coordinate space
-    cleanup_svg_overlaps(flat_svg_path, cleaned_svg_path)
+    # 5. Overlap cleanup (stroke-aware) — skipped for raster-sourced SVGs
+    if skip_overlap_cleanup:
+        logger.info(
+            "Skipping overlap cleanup (skip_overlap_cleanup=True): "
+            "vtracer --hierarchical cutout already resolved inter-color overlap; "
+            "running cleanup_svg_overlaps would destroy Bézier curves."
+        )
+        shutil.copy(flat_svg_path, cleaned_svg_path)
+    else:
+        cleanup_svg_overlaps(flat_svg_path, cleaned_svg_path)
 
-    # 5. SVG optimization (scour) — runs BEFORE resize so it can't undo viewBox changes
+    # 6. SVG optimization (scour) — runs BEFORE resize so it can't undo viewBox changes
     shutil.copy(cleaned_svg_path, optimized_svg_path)
     scoured_path = optimized_svg_path + ".scoured.svg"
     optimize_svg(optimized_svg_path, scoured_path)
     shutil.move(scoured_path, optimized_svg_path)
 
-    # 6. Remove empty/trivial paths (Inkscape artifacts)
+    # 7. Remove empty/trivial paths (Inkscape artifacts)
     remove_empty_paths(optimized_svg_path)
 
-    # 7. Canvas resize — direct coordinate scaling, LAST geometry step
+    # 8. Canvas resize — LAST geometry step
     resize_canvas(optimized_svg_path, target_width_mm=width, target_height_mm=height)
 
-    # 8. Embed thread colors (includes CSS resolution)
+    # 9. Embed thread colors (includes CSS resolution)
     shutil.copy(optimized_svg_path, final_svg_path)
     embed_thread_colors(final_svg_path)
 
@@ -1147,10 +1131,12 @@ def preprocess_to_svg(input_image_path: str, uid, width: float = None, height: f
     """
     Full preprocessing pipeline for raster images:
     1. Remove background (rembg)
-    2. Vectorize (vtracer)
+    2. Vectorize (vtracer --hierarchical cutout)
     3. Color quantization (reduce to ≤ MAX_COLORS)
-    4. Path merging + micro-fragment removal
-    5. Full SVG preprocessing (Inkscape, overlap cleanup, resize, optimize, embed)
+    4. Micro-fragment removal (area check only — Bézier curves NOT touched)
+    5. Full SVG preprocessing with skip_overlap_cleanup=True so that the
+       destructive Shapely boolean ops are bypassed.  vtracer's cutout mode
+       already resolves inter-color overlap at vectorization time.
     """
     os.makedirs(PROCESSED_DIR, exist_ok=True)
     base = str(uid)
@@ -1182,11 +1168,20 @@ def preprocess_to_svg(input_image_path: str, uid, width: float = None, height: f
     # === 3. Color quantization ===
     quantize_svg_colors(temp_svg_path, MAX_COLORS)
 
-    # === 4. Path merging + micro-fragment removal ===
-    merge_same_color_paths(temp_svg_path, MIN_PATH_AREA)
+    # === 4. Micro-fragment removal (area check only — curves preserved) ===
+    # NOTE: We intentionally do NOT merge same-color paths here. Merging via
+    # unary_union + shapely_to_svg_path destroys Bézier curves by converting
+    # them to straight-line polygons (L commands only). vtracer --hierarchical
+    # cutout already produces non-overlapping geometry so merging is redundant.
+    remove_micro_fragments(temp_svg_path, MIN_PATH_AREA)
 
-    # === 5. Full SVG preprocessing (Inkscape, viewBox, bake, overlap, scour, resize, embed) ===
-    final_path = preprocess_svg_file(temp_svg_path, uid, width, height)
+    # === 5. Full SVG preprocessing — overlap cleanup SKIPPED for raster ===
+    # skip_overlap_cleanup=True: cleanup_svg_overlaps() uses Shapely difference()
+    # + shapely_to_svg_path() which would destroy all remaining Bézier curves.
+    # Inter-color overlap was already resolved by vtracer's cutout mode.
+    final_path = preprocess_svg_file(
+        temp_svg_path, uid, width, height, skip_overlap_cleanup=True
+    )
 
     # Cleanup
     if os.path.exists(temp_svg_path):
